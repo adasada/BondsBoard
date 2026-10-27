@@ -1,0 +1,46 @@
+name: Daily bond curve update
+
+on:
+  schedule:
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bond-market-data-update
+  cancel-in-progress: false
+
+jobs:
+  refresh-market-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch and validate daily curves
+        id: update
+        run: python scripts/update_market.py
+        continue-on-error: true
+      - name: Commit changed market data
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/market.json
+          if git diff --cached --quiet; then
+            echo "没有数据或状态变更"
+          else
+            git commit -m "chore: refresh daily bond curves"
+            git push origin main
+          fi
+      - name: Mark failed data collection
+        if: steps.update.outcome != 'success'
+        run: exit 1
