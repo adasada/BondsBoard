@@ -7,6 +7,11 @@
     <meta name="description" content="每日跟踪中国国债与国开债收益率曲线、历史走势和期限利差。" />
     <title>债市日观 · 债券行情监控</title>
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./themes.css" />
+    <link rel="stylesheet" href="./custom-index.css" />
+    <script src="./themes.js"></script>
+    <script src="./custom-index-model.js" defer></script>
+    <script src="./custom-index.js" defer></script>
     <script src="./app.js" defer></script>
   </head>
   <body>
@@ -18,6 +23,10 @@
         </a>
         <div class="topbar-right">
           <span class="market-pill"><i></i> 中国债券市场</span>
+          <button class="skin-trigger" id="skin-open" type="button" aria-haspopup="dialog" aria-controls="skin-dialog">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 1.6-3.2 1.4 1.4 0 0 1 1.1-2.3H18A3 3 0 0 0 21 12a9 9 0 0 0-9-9Z"/><circle cx="7.5" cy="10" r=".8"/><circle cx="11" cy="6.8" r=".8"/><circle cx="15.5" cy="8.5" r=".8"/></svg>
+            <span>外观工坊</span>
+          </button>
           <button class="icon-button" id="refresh-button" type="button" aria-label="重新加载数据" title="重新加载数据">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4.6 9a7.5 7.5 0 0 1 12.9-2L20 12M4 17v-5h5m10.4 3a7.5 7.5 0 0 1-12.9 2L4 12" /></svg>
           </button>
@@ -110,6 +119,41 @@
             <div class="brief-rule"><span class="rule-line"></span><span>基于收盘曲线变化自动生成</span></div>
           </article>
         </section>
+
+        <section class="panel custom-index-panel" aria-labelledby="custom-index-title">
+          <div class="panel-heading custom-index-heading">
+            <div><p class="section-kicker">SCENARIO PORTFOLIO</p><h2 id="custom-index-title">自定义基金指数</h2></div>
+            <span class="unit-badge">可调情景代理 · 非真实净值</span>
+          </div>
+          <p class="custom-index-intro">用公开收益率曲线和自设参数观察组合情景变化。假设恒定权重、每日再平衡；信用与地方债使用可调利差代理，不代表任何单一产品或真实持仓。</p>
+          <div class="custom-index-layout">
+            <div class="custom-index-results">
+              <div class="custom-index-stats" aria-live="polite">
+                <article class="index-stat"><span>指数点位</span><strong id="index-value">等待行情</strong><small id="index-asof">—</small></article>
+                <article class="index-stat"><span id="index-range-label">区间收益 · 30 天</span><strong id="index-return">—</strong><small id="index-observations">—</small></article>
+                <article class="index-stat"><span>区间最大回撤</span><strong id="index-drawdown">—</strong><small>按模型日度序列</small></article>
+                <article class="index-stat"><span>利率 / 利差冲击</span><strong id="index-scenario">—</strong><small id="index-scenario-note">—</small></article>
+              </div>
+              <div class="index-chart-wrap" id="custom-index-chart" role="img" aria-label="自定义组合情景指数历史曲线"><div class="chart-empty">等待行情数据</div></div>
+              <div class="index-chart-foot"><span id="index-model-note">等待行情数据</span><div class="range-row index-range" role="group" aria-label="指数历史区间"><button type="button" data-index-range="30" class="active">30 天</button><button type="button" data-index-range="90">90 天</button><button type="button" data-index-range="all">全部</button></div></div>
+            </div>
+            <form class="index-controls" id="index-config" novalidate>
+              <div class="index-controls-heading"><div><h3>组合与情景参数</h3><p>权重合计需为 100%，修改即时重算</p></div><div class="index-actions"><button type="button" id="index-save" class="skin-button skin-button-primary">保存</button><button type="button" id="index-reset" class="skin-button">重置</button></div></div>
+              <div class="index-bucket-list" id="index-buckets"></div>
+              <div class="index-weight-summary"><span>权重合计</span><strong id="index-weight-total">—</strong><span id="index-config-status" role="status" aria-live="polite">加载中</span></div>
+              <div class="index-allocation" id="index-allocation" aria-label="组合权重分布"></div>
+              <div class="index-global-fields">
+                <label>杠杆倍数<input name="leverage" type="number" min="1" max="2" step="0.05" /></label>
+                <label>年化费率 (%)<input name="feePct" type="number" min="0" max="5" step="0.01" /></label>
+                <label>融资成本 (%)<input name="fundingPct" type="number" min="0" max="15" step="0.05" /></label>
+                <label>基准点位<input name="baseValue" type="number" min="1" max="100000" step="100" /></label>
+                <label>利率冲击 (bp)<input name="rateShockBp" type="number" min="-500" max="500" step="5" /></label>
+                <label>信用利差冲击 (bp)<input name="creditShockBp" type="number" min="-500" max="1000" step="5" /></label>
+              </div>
+              <p class="index-formula-note">近似日收益 = 持有收益 − 久期价格影响 + 凸性修正；杠杆同时放大资产收益并计入融资成本。参数仅供情景比较。</p>
+            </form>
+          </div>
+        </section>
       </main>
 
       <footer class="footer">
@@ -118,5 +162,51 @@
         <p>仅作课程学习与市场观察，不构成投资建议。收益率曲线数据的转载与展示应遵循数据来源方的使用规则。</p>
       </footer>
     </div>
+    <dialog id="skin-dialog" class="skin-dialog" aria-labelledby="skin-title" aria-describedby="skin-description">
+      <div class="skin-header">
+        <div><p class="skin-kicker">MAKE IT YOURS</p><h2 id="skin-title">外观工坊<span>✳</span></h2><p id="skin-description">挑一款灵感，或自由搭配你的看盘空间。</p></div>
+        <button type="button" id="skin-close" class="skin-close" aria-label="关闭外观工坊" autofocus>×</button>
+      </div>
+      <div class="skin-scroll">
+        <section class="skin-section" aria-labelledby="preset-title">
+          <div class="skin-section-heading"><h3 id="preset-title">从一款灵感开始</h3><span id="skin-current">晨间纸白</span></div>
+          <div class="skin-presets" id="skin-presets"></div>
+        </section>
+        <section class="skin-section" aria-labelledby="mix-title">
+          <div class="skin-section-heading"><h3 id="mix-title">自由搭配</h3><span>每一项都可以独立选择</span></div>
+          <div class="skin-fields">
+            <label class="skin-field">色彩基调<select id="skin-palette" data-skin-field="palette"><option value="dawn">晨间 · 冷白</option><option value="aurora">极光 · 深蓝</option><option value="garden">花园 · 薄荷</option><option value="sunset">落日 · 奶油</option><option value="terminal">终端 · 墨黑</option></select></label>
+            <label class="skin-field">控件风格<select id="skin-controls" data-skin-field="controls"><option value="soft">柔和浮层</option><option value="glass">通透玻璃</option><option value="outline">线框手账</option><option value="terminal">终端面板</option></select></label>
+            <label class="skin-field">背景氛围<select id="skin-background" data-skin-field="background"><option value="plain">纯色留白</option><option value="aurora">流光渐变</option><option value="grid">坐标网格</option><option value="contours">地形等高线</option></select></label>
+            <label class="skin-field">动画总开关<select id="skin-motion" data-skin-field="motion"><option value="all">开启已选动效</option><option value="off">关闭所有动画</option></select></label>
+            <label class="skin-field">页面入场<select id="skin-entrance" data-skin-field="entrance"><option value="rise">轻柔上浮</option><option value="cascade">依次出现</option><option value="zoom">缩放展开</option><option value="off">关闭</option></select></label>
+            <label class="skin-field">数据更新<select id="skin-refresh" data-skin-field="refresh"><option value="glow">数字柔光</option><option value="pulse">卡片脉冲</option><option value="flip">数字翻页</option><option value="off">关闭</option></select></label>
+            <label class="skin-field">图表更新<select id="skin-chartMotion" data-skin-field="chartMotion"><option value="draw">曲线绘制</option><option value="fade">淡入替换</option><option value="dots">数据点跃现</option><option value="off">关闭</option></select></label>
+            <label class="skin-field">背景动效<select id="skin-ambient" data-skin-field="ambient"><option value="drift">缓慢流动</option><option value="scan">扫光巡游</option><option value="off">静止</option></select></label>
+            <label class="skin-field">文字气质<select id="skin-font" data-skin-field="font"><option value="sans">现代无衬线</option><option value="serif">宋体书卷</option><option value="mono">等宽数字派</option></select></label>
+            <label class="skin-field">信息密度<select id="skin-density" data-skin-field="density"><option value="comfortable">舒展</option><option value="compact">紧凑</option></select></label>
+          </div>
+          <label class="skin-range-label" for="skin-radius"><span>卡片圆角</span><output id="skin-radius-value" for="skin-radius">16 px</output></label>
+          <input id="skin-radius" type="range" min="0" max="28" step="1" data-skin-field="radius" />
+          <label class="skin-range-label" for="skin-motionSpeed"><span>动画速度</span><output id="skin-motionSpeed-value" for="skin-motionSpeed">1.0×</output></label>
+          <input id="skin-motionSpeed" type="range" min="0.5" max="2" step="0.1" data-skin-field="motionSpeed" />
+          <div class="skin-colors">
+            <label><input type="color" id="skin-primary" data-skin-color="primary" /><span>主色 · 国债</span></label>
+            <label><input type="color" id="skin-secondary" data-skin-color="secondary" /><span>辅色 · 国开债</span></label>
+            <label><input type="color" id="skin-page" data-skin-color="page" /><span>页面底色</span></label>
+          </div>
+          <p class="skin-hint">页面入场、数据刷新、图表与背景动效可分别设置；关闭总开关或系统开启“减少动态效果”时，页面静止。</p>
+        </section>
+        <section class="skin-section skin-collection" aria-labelledby="collection-title">
+          <div class="skin-section-heading"><h3 id="collection-title">我的搭配</h3><span>保存在当前浏览器</span></div>
+          <form id="skin-save-form" class="skin-save-form"><label class="visually-hidden" for="skin-name">搭配名称</label><input id="skin-name" type="text" maxlength="24" placeholder="给这套搭配取个名字" required /><button type="submit" class="skin-button skin-button-primary">收藏搭配</button></form>
+          <div id="skin-saved" class="skin-saved"></div>
+        </section>
+      </div>
+      <div class="skin-footer">
+        <div class="skin-transfer"><button type="button" class="skin-button" id="skin-export">导出</button><button type="button" class="skin-button" id="skin-import">导入</button><input id="skin-import-file" type="file" accept=".json,application/json" hidden /><button type="button" class="skin-button" id="skin-reset">恢复默认</button></div>
+        <p id="skin-feedback" role="status" aria-live="polite">调整即时生效，自动保存</p>
+      </div>
+    </dialog>
   </body>
 </html>

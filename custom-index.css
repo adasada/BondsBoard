@@ -1,0 +1,74 @@
+.custom-index-panel { margin-top: 12px; padding: 22px; }
+.custom-index-heading { align-items: center; }
+.custom-index-heading h2 { margin: 0; }
+.custom-index-intro { color: var(--muted); font-size: 11px; line-height: 1.75; margin: -2px 0 18px; max-width: 960px; }
+.custom-index-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(370px, .95fr); align-items: start; gap: 22px; }
+.custom-index-results { min-width: 0; }
+.custom-index-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.index-stat { min-width: 0; padding: 13px 12px 11px; border: 1px solid var(--line); border-radius: var(--radius, 12px); background: color-mix(in srgb, var(--surface) 87%, var(--navy)); }
+.index-stat > span,.index-stat small { display: block; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.index-stat strong { display: block; overflow: hidden; margin: 8px 0 4px; color: var(--ink); font: 650 clamp(17px, 2vw, 24px)/1.1 var(--font); letter-spacing: -.035em; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.index-stat strong.is-positive { color: var(--green); }
+.index-stat strong.is-negative { color: var(--red); }
+.index-chart-wrap { height: 246px; margin-top: 12px; border: 1px solid var(--line); border-radius: var(--radius, 12px); padding: 8px 9px 4px; background: color-mix(in srgb, var(--surface) 94%, var(--navy)); }
+.index-chart-wrap svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.index-history-line { fill: none; stroke: var(--navy); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.index-history-fill { fill: url(#index-area-fill); }
+.index-chart-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 7px; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.index-range { flex: none; margin: 0; }
+.index-range button { padding: 5px 9px; font-size: 9px; }
+.index-controls { min-width: 0; padding: 15px; border: 1px solid var(--line); border-radius: var(--radius, 12px); background: color-mix(in srgb, var(--surface) 94%, var(--navy)); }
+.index-controls-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+.index-controls-heading h3 { margin: 0; color: var(--ink); font-size: 12px; font-weight: 650; }
+.index-controls-heading p { margin: 5px 0 0; color: var(--muted); font-size: 9px; }
+.index-actions { display: flex; gap: 6px; }
+.index-actions .skin-button { padding: 7px 10px; font-size: 9px; }
+.index-bucket-list { display: grid; gap: 6px; }
+.index-bucket { display: grid; grid-template-columns: 9px minmax(69px, 1fr) 72px 104px 73px 77px; align-items: center; gap: 7px; padding: 7px 8px; border: 1px solid color-mix(in srgb, var(--line) 76%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--surface) 82%, var(--navy)); }
+.index-bucket-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bucket-color); }
+.index-bucket > strong { color: var(--ink); font-size: 9px; font-weight: 600; overflow-wrap: anywhere; }
+.index-bucket label { display: grid; gap: 4px; min-width: 0; color: var(--muted); font-size: 8px; }
+.index-bucket :is(input,select),.index-global-fields input { min-width: 0; width: 100%; height: 29px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); font: 10px var(--font); font-variant-numeric: tabular-nums; }
+.index-input-suffix { position: relative; display: block; }
+.index-input-suffix input { padding-right: 20px; }
+.index-input-suffix i { position: absolute; top: 0; right: 6px; height: 29px; color: var(--muted); font: normal 8px/29px var(--font); pointer-events: none; }
+.index-bucket select { cursor: pointer; padding-right: 1px; font-size: 9px; }
+.index-cash-hint { grid-column: span 3; align-self: center; color: var(--muted); font-size: 8px; }
+.index-weight-summary { display: flex; align-items: baseline; gap: 8px; margin-top: 10px; color: var(--muted); font-size: 9px; }
+.index-weight-summary strong { color: var(--ink); font-size: 11px; font-variant-numeric: tabular-nums; }
+.index-weight-summary strong.is-invalid,.index-config-status.is-invalid { color: var(--red); }
+#index-config-status { margin-left: auto; text-align: right; }
+.index-allocation { display: flex; width: 100%; height: 7px; overflow: hidden; gap: 2px; margin-top: 7px; border-radius: 7px; background: var(--line); }
+.index-allocation i { display: block; min-width: 2px; background: var(--bucket-color); transition: width .2s ease; }
+.index-global-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px 8px; margin-top: 14px; }
+.index-global-fields label { display: grid; gap: 5px; min-width: 0; color: var(--muted); font-size: 8px; }
+.index-formula-note { margin: 11px 0 0; color: var(--muted); font-size: 8px; line-height: 1.7; }
+@media (max-width: 1050px) {
+  .custom-index-layout { grid-template-columns: minmax(0, 1fr); }
+  .index-controls { order: 2; }
+}
+@media (max-width: 700px) {
+  .custom-index-panel { padding: 16px 14px 13px; }
+  .custom-index-heading { align-items: flex-start; }
+  .custom-index-heading .unit-badge { max-width: 140px; white-space: normal; text-align: center; }
+  .custom-index-intro { font-size: 9px; margin: 0 0 13px; }
+  .custom-index-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .index-stat { padding: 10px 9px 8px; }
+  .index-stat strong { margin: 6px 0 3px; font-size: 19px; }
+  .index-chart-wrap { height: 205px; padding: 5px; }
+  .index-chart-foot { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .index-controls { padding: 11px 9px; }
+  .index-bucket { grid-template-columns: 8px minmax(62px, 1fr) 61px 82px 61px 64px; gap: 4px; padding: 6px 4px; }
+  .index-bucket > strong { font-size: 8px; }
+  .index-bucket :is(input,select) { height: 27px; padding: 3px; font-size: 9px; }
+  .index-input-suffix input { padding-right: 16px; }
+  .index-input-suffix i { right: 4px; height: 27px; line-height: 27px; font-size: 7px; }
+  .index-global-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .index-actions .skin-button { padding: 7px 8px; }
+}
+@media (max-width: 390px) {
+  .index-bucket { grid-template-columns: 7px minmax(56px, 1fr) 55px 74px 55px 58px; gap: 3px; padding: 5px 3px; }
+  .index-bucket label { font-size: 7px; }
+  .index-bucket :is(input,select) { font-size: 8px; }
+  .index-chart-wrap { height: 185px; }
+}

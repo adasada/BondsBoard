@@ -15,9 +15,9 @@
     { year: 30, label: '30Y', longLabel: '30 年' },
   ];
   const SERIES = {
-    treasury: { title: '10 年国债', field: 'treasury', unit: '%', color: '#354b72' },
-    policy: { title: '10 年国开债', field: 'policy', unit: '%', color: '#4c9b91' },
-    spread: { title: '10Y 国开债－国债利差', field: 'spread', unit: 'bp', color: '#c59b47' },
+    treasury: { title: '10 年国债', field: 'treasury', unit: '%', color: 'var(--navy)' },
+    policy: { title: '10 年国开债', field: 'policy', unit: '%', color: 'var(--teal)' },
+    spread: { title: '10Y 国开债－国债利差', field: 'spread', unit: 'bp', color: 'var(--gold)' },
   };
   const state = { data: null, range: 30, series: 'treasury', tableSeries: 'treasury' };
   const $ = (id) => document.getElementById(id);
@@ -168,9 +168,9 @@
       if (!row) return '';
       const points = TENORS.map((tenor, index) => ({ x: index, y: yieldAt(row, field, tenor.year), tenor })).filter((point) => point.y !== null);
       const path = makeLinePath(points, x, y);
-      const dotColor = row === previous ? '#aeb8c5' : klass === 'navy' ? '#354b72' : '#4c9b91';
+      const dotColor = row === previous ? 'var(--chart-previous)' : klass === 'navy' ? 'var(--navy)' : 'var(--teal)';
       const dots = points.map((point) => `<circle class="chart-point ${klass}" fill="${dotColor}" cx="${x(point.x)}" cy="${y(point.y)}" r="3.2"><title>${row.date} · ${field === 'treasury' ? '国债' : '国开债'} ${point.tenor.label}：${number(point.y)}%</title></circle>`).join('');
-      return `<path class="curve-line ${klass}${row === previous ? ' previous' : ''}" d="${path}"/>${dots}`;
+      return `<path pathLength="1" class="curve-line ${klass}${row === previous ? ' previous' : ''}" d="${path}"/>${dots}`;
     };
     host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${current.date}国债与国开债到期收益率曲线，虚线为上一交易日"><g>${grid}${xTicks}</g>${curve(previous, 'treasury', 'navy')}${curve(previous, 'policy', 'teal')}${curve(current, 'treasury', 'navy')}${curve(current, 'policy', 'teal')}</svg>`;
   }
@@ -207,7 +207,7 @@
     const selected = [0, Math.round((entries.length - 1) / 2), entries.length - 1];
     const xLabels = [...new Set(selected)].map((index) => `<text class="chart-axis" x="${x(index)}" y="${H - 8}" text-anchor="${index === 0 ? 'start' : index === entries.length - 1 ? 'end' : 'middle'}">${shortDate(entries[index].date)}</text>`).join('');
     const dots = points.map((point, index) => `<circle class="chart-point" fill="${spec.color}" cx="${x(point.x)}" cy="${y(point.y)}" r="${index === points.length - 1 ? 4 : 2.7}" opacity="${index === points.length - 1 ? 1 : .76}"><title>${point.row.date} · ${spec.title}：${number(point.y, state.series === 'spread' ? 1 : 4)} ${spec.unit}</title></circle>`).join('');
-    host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${spec.title}过去${state.range}天历史走势"><g>${grid}</g><path class="history-fill" fill="${spec.color}" d="${area}"/><path class="history-line" stroke="${spec.color}" d="${path}"/>${dots}${xLabels}</svg>`;
+    host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${spec.title}过去${state.range}天历史走势"><g>${grid}</g><path class="history-fill" fill="${spec.color}" d="${area}"/><path pathLength="1" class="history-line" stroke="${spec.color}" d="${path}"/>${dots}${xLabels}</svg>`;
   }
 
   function renderTable(history) {
@@ -253,6 +253,11 @@
     renderHistory(history);
     renderTable(history);
     renderBrief(history);
+    window.dispatchEvent(new CustomEvent('bondsboard:market-data', { detail: {
+      history,
+      status: state.data?.status || 'empty',
+      checkedAt: state.data?.checkedAt || null,
+    } }));
   }
 
   async function loadData({ quiet = false } = {}) {
@@ -263,14 +268,27 @@
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       if (!Array.isArray(data.history)) throw new Error('行情文件结构无效');
+      const previous = state.data;
       state.data = data;
       renderAll();
+      window.dispatchEvent(new CustomEvent('bondsboard:data-refresh', { detail: {
+        ok: true,
+        quiet,
+        initial: !previous,
+        changed: !previous || previous.latestDate !== data.latestDate || JSON.stringify(previous.history) !== JSON.stringify(data.history),
+      } }));
     } catch (error) {
       if (!state.data) {
         $('notice-message').textContent = '无法读取行情文件，请稍后重试或通过本地 HTTP 服务预览。';
         $('market-date').textContent = '暂无行情';
       }
       console.error('加载行情失败', error);
+      window.dispatchEvent(new CustomEvent('bondsboard:market-data', { detail: {
+        history: sortedHistory(),
+        status: state.data?.status || 'error',
+        checkedAt: state.data?.checkedAt || null,
+      } }));
+      window.dispatchEvent(new CustomEvent('bondsboard:data-refresh', { detail: { ok: false, quiet, initial: !state.data, changed: false } }));
     } finally {
       button.classList.remove('is-loading');
     }
