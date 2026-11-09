@@ -14,6 +14,17 @@
 .index-chart-wrap svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .index-history-line { fill: none; stroke: var(--navy); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .index-history-fill { fill: url(#index-area-fill); }
+.index-forecast-line { fill: none; stroke: var(--gold); stroke-width: 2.4; stroke-dasharray: 5 5; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.index-chart-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; color: var(--navy); font-size: 10px; }
+.index-chart-legend span:last-child { color: var(--gold); }
+.index-forecast-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; padding: 13px 14px; margin-top: 12px; border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--line)); border-radius: var(--radius, 12px); background: color-mix(in srgb, var(--surface) 94%, var(--gold)); }
+.index-forecast-summary span { display: block; color: var(--muted); font-size: 10px; }
+.index-forecast-summary strong { display: block; margin-top: 4px; color: var(--gold); font-size: 25px; font-variant-numeric: tabular-nums; }
+.index-forecast-summary p { flex: 1; min-width: 140px; margin: 0; color: var(--ink); font-size: 10px; line-height: 1.7; }
+.index-forecast-summary small { color: var(--muted); font-size: 9px; }
+.index-forecast-controls { min-width: 0; padding: 12px 0 0; margin: 18px 0 0; border: 0; border-top: 1px solid var(--line); }
+.index-forecast-controls legend { padding: 0 8px 0 0; color: var(--ink); font-size: 11px; }
+.index-forecast-controls .index-global-fields { margin-top: 0; }
 .index-chart-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 7px; color: var(--muted); font-size: 9px; line-height: 1.5; }
 .index-range { flex: none; margin: 0; }
 .index-range button { padding: 5px 9px; font-size: 9px; }
@@ -58,7 +69,9 @@
   .index-chart-wrap { height: 205px; padding: 5px; }
   .index-chart-foot { align-items: flex-start; flex-direction: column; gap: 6px; }
   .index-controls { padding: 11px 9px; }
-  .index-bucket { grid-template-columns: 8px minmax(62px, 1fr) 61px 82px 61px 64px; gap: 4px; padding: 6px 4px; }
+  .index-bucket { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; padding: 9px 7px; }
+  .index-bucket-dot { grid-column: 1; grid-row: 1; }
+  .index-bucket > strong { grid-column: 1 / -1; grid-row: 1; padding-left: 14px; }
   .index-bucket > strong { font-size: 8px; }
   .index-bucket :is(input,select) { height: 27px; padding: 3px; font-size: 9px; }
   .index-input-suffix input { padding-right: 16px; }
@@ -67,7 +80,7 @@
   .index-actions .skin-button { padding: 7px 8px; }
 }
 @media (max-width: 390px) {
-  .index-bucket { grid-template-columns: 7px minmax(56px, 1fr) 55px 74px 55px 58px; gap: 3px; padding: 5px 3px; }
+  .index-bucket { gap: 6px; padding: 8px 6px; }
   .index-bucket label { font-size: 7px; }
   .index-bucket :is(input,select) { font-size: 8px; }
   .index-chart-wrap { height: 185px; }

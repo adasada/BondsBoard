@@ -5,16 +5,30 @@
 
   const STORAGE_KEY = 'bondsboard.custom-index.v1';
   const $ = (id) => document.getElementById(id);
-  const fields = ['leverage', 'feePct', 'fundingPct', 'baseValue', 'rateShockBp', 'creditShockBp'];
+  const fields = ['leverage', 'feePct', 'fundingPct', 'baseValue', 'rateShockBp', 'creditShockBp', 'forecastRateBp', 'forecastCreditBp'];
   let config = Model.cloneDefaults();
   let applied = Model.cloneDefaults();
   let market = { history: [], status: 'empty', checkedAt: null };
   let range = '30';
+  let calculatedDay = null;
 
   function readSaved() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (!Model.validate(saved)) return saved;
+      if (!saved) return null;
+      // Migrate previous browser settings while accepting only known, validated fields.
+      const merged = { ...Model.cloneDefaults(), ...saved };
+      if (!Model.validate(merged)) {
+        const clean = Model.cloneDefaults();
+        fields.forEach((key) => { clean[key] = Number(merged[key]); });
+        clean.forecastDate = merged.forecastDate || '';
+        clean.buckets = clean.buckets.map((bucket) => {
+          const source = merged.buckets.find((item) => item.id === bucket.id);
+          Object.keys(bucket).filter((key) => key !== 'id').forEach((key) => { bucket[key] = Number(source[key]); });
+          return bucket;
+        });
+        return clean;
+      }
     } catch { /* Ignore malformed or unavailable browser storage. */ }
     return null;
   }
@@ -51,6 +65,7 @@
       return `<div class="index-bucket" data-bucket-row="${definition.id}"><span class="index-bucket-dot" style="--bucket-color:${definition.color}"></span><strong>${definition.label}</strong>${weight}${rowFields}</div>`;
     }).join('');
     fields.forEach((key) => { $(`index-config`).elements.namedItem(key).value = config[key]; });
+    $('index-config').elements.namedItem('forecastDate').value = config.forecastDate || '';
   }
 
   function renderAllocation() {
@@ -65,30 +80,37 @@
     }).join('');
   }
 
-  function renderChart(points) {
+  function renderChart(points, forecasts) {
     const host = $('custom-index-chart');
     const entries = selectedHistory(points);
-    if (entries.length < 2) {
-      host.innerHTML = `<div class="chart-empty">${entries.length ? '历史数据不足，暂无法绘制曲线' : '当前参数下暂无可用历史数据'}</div>`;
+    const all = [...entries, ...forecasts];
+    if (!all.length) {
+      const message = market.status === 'error' ? '行情读取失败，请点击顶部刷新或检查网络连接' : market.status === 'empty' ? '正在等待行情文件；加载后自动回溯估算' : !market.history.length ? '行情文件暂无历史曲线，取得首个有效曲线后才能回溯与预估' : '所选资产缺少可用曲线及可插值期限，请调整参考期限或资产权重';
+      host.innerHTML = `<div class="chart-empty">${message}</div>`;
       return;
     }
     const width = 740; const height = 230; const left = 54; const right = 12; const top = 16; const bottom = 30;
-    const values = entries.map((point) => point.value);
+    const values = all.map((point) => point.value);
     const lo = Math.min(...values); const hi = Math.max(...values);
     const pad = (hi - lo || Math.max(hi * 0.002, 1)) * 0.22;
     const y0 = lo - pad; const y1 = hi + pad;
-    const x = (index) => left + index / (entries.length - 1) * (width - left - right);
+    const start = Date.parse(`${all[0].date}T00:00:00Z`);
+    const end = Date.parse(`${all.at(-1).date}T00:00:00Z`);
+    const x = (point) => left + (end === start ? 0.5 : (Date.parse(`${point.date}T00:00:00Z`) - start) / (end - start)) * (width - left - right);
     const y = (value) => top + (y1 - value) / (y1 - y0) * (height - top - bottom);
-    const line = entries.map((point, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(point.value).toFixed(1)}`).join(' ');
-    const area = `${line} L${x(entries.length - 1).toFixed(1)},${height - bottom} L${left},${height - bottom} Z`;
+    const path = (series) => series.map((point, i) => `${i ? 'L' : 'M'}${x(point).toFixed(1)},${y(point.value).toFixed(1)}`).join(' ');
+    const line = path(entries);
+    const area = `${line} L${x(entries.at(-1)).toFixed(1)},${height - bottom} L${x(entries[0]).toFixed(1)},${height - bottom} Z`;
+    const forecastLine = forecasts.length ? `<path class="index-forecast-line" d="${path([entries.at(-1), ...forecasts])}"/>` : '';
     const grid = [0, 1, 2, 3].map((step) => {
       const value = y1 - (y1 - y0) * step / 3; const py = y(value);
       return `<line class="chart-gridline" x1="${left}" x2="${width - right}" y1="${py}" y2="${py}"/><text class="chart-axis" x="${left - 8}" y="${py + 3}" text-anchor="end">${value.toFixed(1)}</text>`;
     }).join('');
-    const dates = [entries[0], entries[Math.floor((entries.length - 1) / 2)], entries.at(-1)];
-    const labels = dates.map((point, index) => `<text class="chart-axis" x="${x(index === 0 ? 0 : index === 1 ? Math.floor((entries.length - 1) / 2) : entries.length - 1)}" y="${height - 8}" text-anchor="${index === 0 ? 'start' : index === 2 ? 'end' : 'middle'}">${point.date.slice(5).replace('-', '.')}</text>`).join('');
-    const latest = entries.at(-1);
-    host.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="情景指数 ${fmt(entries[0].value)} 至 ${fmt(latest.value)} 点"><defs><linearGradient id="index-area-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--navy)" stop-opacity=".23"/><stop offset="1" stop-color="var(--navy)" stop-opacity=".01"/></linearGradient></defs>${grid}<path class="index-history-fill" d="${area}"/><path class="history-line index-history-line" pathLength="1" d="${line}"/><circle class="chart-point" cx="${x(entries.length - 1)}" cy="${y(latest.value)}" r="3.5" fill="var(--navy)"/>${labels}</svg>`;
+    const dates = all.length > 2 ? [all[0], all[Math.floor((all.length - 1) / 2)], all.at(-1)] : all;
+    const labels = dates.map((point, index) => `<text class="chart-axis" x="${x(point)}" y="${height - 8}" text-anchor="${index === 0 ? 'start' : index === dates.length - 1 ? 'end' : 'middle'}">${point.date.slice(5).replace('-', '.')}</text>`).join('');
+    const latest = all.at(-1);
+    const dots = all.map((point) => `<circle cx="${x(point)}" cy="${y(point.value)}" r="5" fill="transparent"><title>${point.date} · ${point.kind === 'forecast' ? '预估' : point.kind === 'gap-estimate' ? '历史缺口回溯补估' : point.kind === 'tenor-estimate' ? '期限插值回溯' : '历史回溯'} ${fmt(point.value)} 点</title></circle>`).join('');
+    host.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="历史回溯至 ${entries.at(-1).date}${forecasts.length ? `，预估至 ${latest.date}` : ''}"><defs><linearGradient id="index-area-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--navy)" stop-opacity=".23"/><stop offset="1" stop-color="var(--navy)" stop-opacity=".01"/></linearGradient></defs>${grid}<path class="index-history-fill" d="${area}"/><path class="history-line index-history-line" pathLength="1" d="${line}"/>${forecastLine}${dots}<circle class="chart-point" cx="${x(latest)}" cy="${y(latest.value)}" r="3.5" fill="${forecasts.length ? 'var(--gold)' : 'var(--navy)'}"/>${labels}</svg>`;
   }
 
   function render() {
@@ -104,18 +126,23 @@
       applied = JSON.parse(JSON.stringify(config));
     }
     const output = Model.calculate(market.history, applied);
+    calculatedDay = output.today;
     const points = output.points;
     const entries = selectedHistory(points);
     const latest = points.at(-1);
+    const forecast = output.forecastPoint;
     const first = entries[0]; const last = entries.at(-1);
     $('index-value').textContent = latest ? fmt(latest.value) : '等待行情';
-    $('index-asof').textContent = latest ? `${latest.date} · 基准 ${fmt(Number(applied.baseValue), 0)}` : '尚无可计算交易日';
+    $('index-asof').textContent = latest ? `${latest.date} · 历史回溯` : '尚无可计算起点';
+    $('index-forecast-value').textContent = forecast ? fmt(forecast.value) : '—';
+    $('index-forecast-date').textContent = output.targetDate === output.today ? '今日预估' : '目标日期预估';
+    $('index-forecast-note').textContent = output.forecastError || (forecast ? `${forecast.date} · 从 ${forecast.afterDate} 延伸 ${forecast.days} 天 · 较历史末点 ${forecast.totalReturn > 0 ? '+' : ''}${fmt(forecast.totalReturn * 100)}%` : latest ? `历史已覆盖 ${output.targetDate}，无需重复预估；可设置更晚日期` : '需先取得至少一个有效曲线起点');
     $('index-range-label').textContent = `区间收益 · ${range === 'all' ? '全部' : `${range} 天`}`;
     const returnPct = first && last && first.value !== 0 ? (last.value / first.value - 1) * 100 : null;
     $('index-return').textContent = Number.isFinite(returnPct) ? `${returnPct > 0 ? '+' : ''}${fmt(returnPct)}%` : '—';
     $('index-return').classList.toggle('is-positive', Number.isFinite(returnPct) && returnPct > 0);
     $('index-return').classList.toggle('is-negative', Number.isFinite(returnPct) && returnPct < 0);
-    $('index-observations').textContent = `${entries.length} 个有效估算日`;
+    $('index-observations').textContent = `${entries.length} 个回溯日 · 含 ${entries.filter((point) => point.kind === 'gap-estimate').length} 个补估日`;
     let peak = -Infinity; let drawdown = 0;
     for (const point of entries) { peak = Math.max(peak, point.value); if (peak > 0) drawdown = Math.min(drawdown, point.value / peak - 1); }
     $('index-drawdown').textContent = entries.length ? `${fmt(drawdown * 100)}%` : '—';
@@ -125,14 +152,16 @@
     $('index-scenario').classList.toggle('is-negative', Number.isFinite(scenario) && scenario < 0);
     $('index-scenario-note').textContent = `利率 ${Number(applied.rateShockBp) > 0 ? '+' : ''}${applied.rateShockBp} bp · 利差 ${Number(applied.creditShockBp) > 0 ? '+' : ''}${applied.creditShockBp} bp`;
     const statusText = market.status === 'success' ? '行情更新' : market.status === 'stale' ? '最近交易日数据' : market.status === 'error' ? '行情读取异常' : '行情状态待确认';
-    $('index-model-note').textContent = `${statusText}${latest ? ` · 曲线日期 ${latest.date}` : ''} · 信用与地方债收益使用自设利差代理`;
-    renderChart(points);
+    $('index-model-note').textContent = `${statusText}${latest ? ` · 曲线截至 ${latest.date}` : ''} · ${output.interpolatedRows || 0} 日期限插值 · ${output.skippedRows || 0} 条缺数记录跳过 · 历史指标不含预估`;
+    renderChart(points, output.forecastPoints || []);
   }
 
   function updateFromTarget(target) {
     if (target.matches('[data-bucket][data-key]')) {
       const bucket = config.buckets.find((item) => item.id === target.dataset.bucket);
       if (bucket) bucket[target.dataset.key] = target.value === '' ? NaN : Number(target.value);
+    } else if (target.name === 'forecastDate') {
+      config.forecastDate = target.value;
     } else if (fields.includes(target.name)) {
       config[target.name] = target.value === '' ? NaN : Number(target.value);
     }
@@ -162,6 +191,13 @@
       market = { history: event.detail?.history || [], status: event.detail?.status || 'empty', checkedAt: event.detail?.checkedAt || null };
       render();
     });
+    if (window.BondsBoardMarketData) {
+      market = window.BondsBoardMarketData;
+      render();
+    }
+    const refreshDate = () => { if (calculatedDay !== Model.chinaToday()) render(); };
+    window.setInterval(refreshDate, 60000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshDate(); });
   }
   init();
 })();

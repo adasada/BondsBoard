@@ -253,11 +253,12 @@
     renderHistory(history);
     renderTable(history);
     renderBrief(history);
-    window.dispatchEvent(new CustomEvent('bondsboard:market-data', { detail: {
+    window.BondsBoardMarketData = {
       history,
       status: state.data?.status || 'empty',
       checkedAt: state.data?.checkedAt || null,
-    } }));
+    };
+    window.dispatchEvent(new CustomEvent('bondsboard:market-data', { detail: window.BondsBoardMarketData }));
   }
 
   async function loadData({ quiet = false } = {}) {
@@ -283,11 +284,12 @@
         $('market-date').textContent = '暂无行情';
       }
       console.error('加载行情失败', error);
-      window.dispatchEvent(new CustomEvent('bondsboard:market-data', { detail: {
+      window.BondsBoardMarketData = {
         history: sortedHistory(),
-        status: state.data?.status || 'error',
+        status: 'error',
         checkedAt: state.data?.checkedAt || null,
-      } }));
+      };
+      window.dispatchEvent(new CustomEvent('bondsboard:market-data', { detail: window.BondsBoardMarketData }));
       window.dispatchEvent(new CustomEvent('bondsboard:data-refresh', { detail: { ok: false, quiet, initial: !state.data, changed: false } }));
     } finally {
       button.classList.remove('is-loading');

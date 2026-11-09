@@ -8,11 +8,11 @@
     <title>债市日观 · 债券行情监控</title>
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./themes.css" />
-    <link rel="stylesheet" href="./custom-index.css" />
+    <link rel="stylesheet" href="./custom-index.css?v=20261109.2" />
     <script src="./themes.js"></script>
-    <script src="./custom-index-model.js" defer></script>
-    <script src="./custom-index.js" defer></script>
-    <script src="./app.js" defer></script>
+    <script src="./custom-index-model.js?v=20261109.2" defer></script>
+    <script src="./custom-index.js?v=20261109.2" defer></script>
+    <script src="./app.js?v=20261109.2" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -125,15 +125,17 @@
             <div><p class="section-kicker">SCENARIO PORTFOLIO</p><h2 id="custom-index-title">自定义基金指数</h2></div>
             <span class="unit-badge">可调情景代理 · 非真实净值</span>
           </div>
-          <p class="custom-index-intro">用公开收益率曲线和自设参数观察组合情景变化。假设恒定权重、每日再平衡；信用与地方债使用可调利差代理，不代表任何单一产品或真实持仓。</p>
+          <p class="custom-index-intro">已发布曲线用于历史回溯，缺口日期作回溯补估；最新曲线之后延伸至今天或自选日期作预估。信用与地方债使用可调利差代理，全部点位均为模型估算，不代表任何单一产品或真实持仓。</p>
           <div class="custom-index-layout">
             <div class="custom-index-results">
               <div class="custom-index-stats" aria-live="polite">
-                <article class="index-stat"><span>指数点位</span><strong id="index-value">等待行情</strong><small id="index-asof">—</small></article>
+                <article class="index-stat"><span>历史回溯点位</span><strong id="index-value">等待行情</strong><small id="index-asof">—</small></article>
                 <article class="index-stat"><span id="index-range-label">区间收益 · 30 天</span><strong id="index-return">—</strong><small id="index-observations">—</small></article>
                 <article class="index-stat"><span>区间最大回撤</span><strong id="index-drawdown">—</strong><small>按模型日度序列</small></article>
                 <article class="index-stat"><span>利率 / 利差冲击</span><strong id="index-scenario">—</strong><small id="index-scenario-note">—</small></article>
               </div>
+              <div class="index-forecast-summary" aria-live="polite"><div><span id="index-forecast-date">今日预估</span><strong id="index-forecast-value">—</strong></div><p id="index-forecast-note">等待历史起点</p><small>假设推演 · 非实际净值</small></div>
+              <div class="index-chart-legend"><span>━ 历史回溯（含缺口补估）</span><span>┄ 今日 / 未来预估</span></div>
               <div class="index-chart-wrap" id="custom-index-chart" role="img" aria-label="自定义组合情景指数历史曲线"><div class="chart-empty">等待行情数据</div></div>
               <div class="index-chart-foot"><span id="index-model-note">等待行情数据</span><div class="range-row index-range" role="group" aria-label="指数历史区间"><button type="button" data-index-range="30" class="active">30 天</button><button type="button" data-index-range="90">90 天</button><button type="button" data-index-range="all">全部</button></div></div>
             </div>
@@ -150,6 +152,11 @@
                 <label>利率冲击 (bp)<input name="rateShockBp" type="number" min="-500" max="500" step="5" /></label>
                 <label>信用利差冲击 (bp)<input name="creditShockBp" type="number" min="-500" max="1000" step="5" /></label>
               </div>
+              <fieldset class="index-forecast-controls"><legend>今日 / 未来预估</legend><div class="index-global-fields">
+                <label>目标日期（留空为今天）<input name="forecastDate" type="date" /></label>
+                <label>期间利率变化 (bp)<input name="forecastRateBp" type="number" min="-500" max="500" step="1" /></label>
+                <label>期间信用利差变化 (bp)<input name="forecastCreditBp" type="number" min="-500" max="1000" step="1" /></label>
+              </div><p class="index-formula-note">从最近有效曲线到目标日的累计变化；默认均为 0，仅计持有收益、融资与费用。独立于上方压力冲击。日期最长延伸 365 天。</p></fieldset>
               <p class="index-formula-note">近似日收益 = 持有收益 − 久期价格影响 + 凸性修正；杠杆同时放大资产收益并计入融资成本。参数仅供情景比较。</p>
             </form>
           </div>
