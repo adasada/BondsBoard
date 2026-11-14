@@ -6,10 +6,10 @@
     "yield": "%",
     "change": "bp"
   },
-  "status": "stale",
-  "message": "数据源尚未发布当日曲线，展示最近交易日收盘数据。",
+  "status": "error",
+  "message": "本次更新检查未成功，页面保留最近一次有效行情。",
   "latestDate": "2026-11-13",
-  "checkedAt": "2026-11-14T03:24:10+08:00",
+  "checkedAt": "2026-11-15T01:48:29+08:00",
   "bootstrapComplete": true,
   "history": [
     {
@@ -1905,5 +1905,6 @@
     }
   ],
   "historyStartDate": "2026-08-17",
-  "historyEndDate": "2026-11-13"
+  "historyEndDate": "2026-11-13",
+  "lastError": "数据接口请求失败：HTTP Error 403: Forbidden"
 }
